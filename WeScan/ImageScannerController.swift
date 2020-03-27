@@ -45,6 +45,8 @@ public final class ImageScannerController: UINavigationController {
     /// The object that acts as the delegate of the `ImageScannerController`.
     public weak var imageScannerDelegate: ImageScannerControllerDelegate?
     
+    private let scannerViewController = ScannerViewController()
+    
     // MARK: - Life Cycle
     
     /// A black UIView, used to quickly display a black screen when the shutter button is presseed.
@@ -61,7 +63,7 @@ public final class ImageScannerController: UINavigationController {
     }
     
     public required init(image: UIImage? = nil, delegate: ImageScannerControllerDelegate? = nil) {
-        super.init(rootViewController: ScannerViewController())
+        super.init(rootViewController: scannerViewController)
         
         self.imageScannerDelegate = delegate
         
@@ -91,13 +93,19 @@ public final class ImageScannerController: UINavigationController {
                 // Use the VisionRectangleDetector on iOS 11 to attempt to find a rectangle from the initial image.
                 VisionRectangleDetector.rectangle(forImage: ciImage, orientation: orientation) { (quad) in
                     detectedQuad = quad?.toCartesian(withHeight: orientedImage.extent.height)
-                    let editViewController = EditScanViewController(image: image, quad: detectedQuad, rotateImage: false)
+                    let editViewController = EditScanViewController(image: image,
+                                                                    pixelBuffer: self.scannerViewController.pixelBuffer,
+                                                                    quad: detectedQuad,
+                                                                    rotateImage: false)
                     self.setViewControllers([editViewController], animated: true)
                 }
             } else {
                 // Use the CIRectangleDetector on iOS 10 to attempt to find a rectangle from the initial image.
                 detectedQuad = CIRectangleDetector.rectangle(forImage: ciImage)?.toCartesian(withHeight: orientedImage.extent.height)
-                let editViewController = EditScanViewController(image: image, quad: detectedQuad, rotateImage: false)
+                let editViewController = EditScanViewController(image: image,
+                                                                pixelBuffer: self.scannerViewController.pixelBuffer,
+                                                                quad: detectedQuad,
+                                                                rotateImage: false)
                 setViewControllers([editViewController], animated: false)
             }
         }
@@ -170,6 +178,9 @@ public struct ImageScannerResults {
     /// The enhanced scan, passed through an Adaptive Thresholding function. This image will always be grayscale and may not always be available.
     public var enhancedScan: ImageScannerScan?
     
+    /// The underlying pixel buffer of full captured image.
+    public var pixelBuffer: CVPixelBuffer?
+    
     /// Whether the user selected the enhanced scan or not.
     /// The `enhancedScan` may still be available even if it has not been selected by the user.
     public var doesUserPreferEnhancedScan: Bool
@@ -189,12 +200,13 @@ public struct ImageScannerResults {
     @available(*, unavailable, renamed: "doesUserPreferEnhancedScan")
     public var doesUserPreferEnhancedImage: Bool = false
     
-    init(detectedRectangle: Quadrilateral, originalScan: ImageScannerScan, croppedScan: ImageScannerScan, enhancedScan: ImageScannerScan?, doesUserPreferEnhancedScan: Bool = false) {
+    init(detectedRectangle: Quadrilateral, originalScan: ImageScannerScan, croppedScan: ImageScannerScan, enhancedScan: ImageScannerScan?, pixelBuffer: CVPixelBuffer?, doesUserPreferEnhancedScan: Bool = false) {
         self.detectedRectangle = detectedRectangle
         
         self.originalScan = originalScan
         self.croppedScan = croppedScan
         self.enhancedScan = enhancedScan
+        self.pixelBuffer = pixelBuffer
         
         self.doesUserPreferEnhancedScan = doesUserPreferEnhancedScan
     }

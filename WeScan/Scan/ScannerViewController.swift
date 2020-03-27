@@ -18,6 +18,8 @@ final class ScannerViewController: UIViewController {
     /// The view that shows the focus rectangle (when the user taps to focus, similar to the Camera app)
     private var focusRectangle: FocusRectangleView!
     
+    internal var pixelBuffer: CVPixelBuffer?
+    
     /// The view that draws the detected rectangles.
     private let quadView = QuadrilateralView()
         
@@ -287,10 +289,11 @@ extension ScannerViewController: RectangleDetectionDelegateProtocol {
         shutterButton.isUserInteractionEnabled = false
     }
     
-    func captureSessionManager(_ captureSessionManager: CaptureSessionManager, didCapturePicture picture: UIImage, withQuad quad: Quadrilateral?) {
+    func captureSessionManager(_ captureSessionManager: CaptureSessionManager, didCapturePicture picture: UIImage, pixelBuffer: CVPixelBuffer?, withQuad quad: Quadrilateral?) {
         activityIndicator.stopAnimating()
         
-        let editVC = EditScanViewController(image: picture, quad: quad)
+        self.pixelBuffer = pixelBuffer
+        let editVC = EditScanViewController(image: picture, pixelBuffer: pixelBuffer, quad: quad)
         navigationController?.pushViewController(editVC, animated: false)
         
         shutterButton.isUserInteractionEnabled = true
