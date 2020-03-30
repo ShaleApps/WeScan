@@ -294,7 +294,7 @@ extension ScannerViewController: RectangleDetectionDelegateProtocol {
         activityIndicator.stopAnimating()
         
         guard !hasPushed else { return }
-        hasPushes = true
+        hasPushed = true
         
         self.pixelBuffer = pixelBuffer
         let editVC = EditScanViewController(image: picture, pixelBuffer: pixelBuffer, quad: quad)
